@@ -113,3 +113,64 @@ means. A failing HTTP test also left its server listening, which looked like a h
 helper now registers every boot and closes them in an `after` hook, so red is reported as red.
 `verify.sh` stopped treating `npm`'s update notice as an audit verdict (it asks for the count now)
 and accepts a directory with an index when checking that references resolve beside the page.
+
+## Step 3 — Editing the four layers on a saved film
+
+**Editing lives on the film page, and states its consequence before it is applied.**
+`POST /studio/film/:id/layers` is the only write. The controls are the same `layerFields()` the entry
+cards use, so a value that can be picked at creation can be picked afterwards and a value that would
+be refused there is refused here. Above the form sits the rule itself, generated from `RESET_START`
+rather than retyped: look → from the storyboard artist, genre/format/sound → from the scriptwriter,
+and both approval gates withdrawn. If the rule changes, the sentence changes with it.
+
+**Refusal happens before the record is opened for writing.**
+`changeLayers` parses first. An unknown look returns 422 with `parseLayerFields`'s errors and never
+reaches `store.update` — the tests compare the stored file byte-for-byte, not just the version number,
+because "nothing was written" is a claim about the disk, not about a counter. A submission that changes
+nothing writes nothing: it says "already the values on this brief, so no stage was reset" instead of
+resetting stages for the sake of appearing to do something.
+
+**The refused value is echoed but not applied.**
+After a refusal the select still shows the look that is actually stored (`data-selected`), with what
+you sent in `data-rejected` and the reason beside it. Snapping the control back to "let the studio
+suggest" would have implied the brief now says that — the opposite of what happened.
+
+**A stale page loses; it is not applied on top.**
+The form carries the version it was reading. If another tab saved first, the compare-and-set drops
+this write and says so. An edit while a stage is running is refused outright: leaving the run alone
+and asking again after it settles is the only ordering that cannot produce a stage that finished
+against a brief it was never given.
+
+**Approvals are withdrawn, not inherited.** Changing direction sends the affected stages back and
+clears both gates, including a gate that was mid-question about work that just went stale. The
+question gets asked again after the rework; a release approval given to the older version cannot be
+read as approval of this one.
+
+**Bug found while wiring this: "no visible faces" was being read as no instruction at all.**
+The face rules matched permission and prohibition in the same sentence. `ALLOW` contained
+`visible faces`, which is a substring of "no visible faces", so the studio's most common faceless
+instruction came out as *both* and got reported as ambiguous, dropping the clause from the saved
+brief. A second defect sat in `AVOID`, whose optional `not` let "faces appear" look like a
+prohibition. Both patterns now require an actual negation, and permission is tested against text with
+the prohibitions masked out (`AVOID_G`, derived from `AVOID` itself so the two lists cannot drift).
+`test/studio-layers.test.js` and the face table in `test/studio.test.js` pin phrasings in both
+directions: `no visible faces`/`faces never appear`/`faces cannot be seen` refuse, `faces appear in
+the second half`/`with faces`/`characters may be seen` allow, `no faces, but with faces` is unclear,
+and `faceless` alone still means "no presenter", which is not the same claim.
+
+**Face direction is never re-derived in the browser.**
+`faceDirection` reads prose, and prose the browser has not read cannot be judged by it. So the saved
+clause is carried through `data-face`, and an unsent form prints "face direction not set yet" instead
+of pretending the notes had been interpreted. `public/studio.js` may rewrite the four choices; it may
+not invent a fifth fact.
+
+**Near-miss worth recording: a rebase deleted the working tree.**
+`git rebase --onto origin/main $(git rev-list --max-parents=0 HEAD) main` had nothing to replay, so
+it hard-reset to their stub commit and removed every file my commit tracked — the whole `app/src` tree
+and `docs/`, which survived only as a dangling commit. It also deleted `.gitignore` on the way, and the
+next `git add -A` quietly staged `node_modules`, screenshots, the generated `site/`, and
+`preview-data/studio/film-*.json` — a real film record. Nothing was pushed; the good tree was recovered
+with `git read-tree` + `git checkout-index`, the junk commit was pruned with
+`reflog expire --expire-unreachable=now --all && git gc --prune=now`, and the rebuilt commit is 79
+tracked files with those patterns ignored. Lesson kept as a rule: never rebase a root commit onto
+someone else's history, and check `git status` *after* staging, not before.

@@ -51,15 +51,26 @@ Status as of this session. "Green" means a test or command proves it, not that a
 - No git history exists in this environment; the snapshot zip is the only rollback point.
 
 ## Now
+- Step 3 delivered: the four layers are editable on a saved film, with the reset rule stated first.
 - Step 2 delivered: Start a film → two entry choices → four brief layers saved → real pipeline status.
-- Suites: unit 11, intake 7, model 23, studio 12, pipeline 15, integration 9, studio-http 11 = 88 pass / 0 fail.
+- Suites: unit 11, intake 7, model 23, studio 12, pipeline 15, integration 9, studio-http 11,
+  studio-layers 9 = 97 pass / 0 fail. e2e proof 46 claims. `verify.sh` all checks passed.
 - `npm run build` green, `verify.sh` all checks passed, `test/e2e-proof.mjs` 36 PASS.
 - Preview: the running app on port 3000 in prototype mode (GET and HEAD both served).
 
 ## Next
-- Wire the live summary to the form controls in `public/studio.js`, so the one-line direction updates
-  as you pick a look, genre, format or sound, before submit.
-- Layer edits on an existing film: `applyLayerChange` and `RESET_START` exist but are not callable yet.
+- Per-stage use of the layers: the storyboard/prompt side still reads the direction line as text.
 - Sound-direction handling for `asmr_sound_first` + `silent_captions` in formats that assume a VO.
 - Per-stage format plans: the brief says ASMR or ambient loop, the storyboard prompt does not yet act
   on it.
+
+## Step 3 — direction editing on a saved film (done)
+- `POST /studio/film/:id/layers` → `pipeline.changeLayers`: parse → refuse → settle → CAS write.
+- Film page carries the editor with `data-reset-rule` / `data-reset-map`, both generated from
+  `RESET_START`; refused values echo in `data-rejected` while the control keeps the stored look.
+- RESET_START clears the stages it feeds, withdraws both gates, and closes a gate that was asking
+  about work that just went stale. Refused while a stage is running; nothing written in either case.
+- Fixed the face rules: "no visible faces" no longer reads as ambiguous, "faces appear" no longer
+  reads as a prohibition. Verified in both directions.
+- `public/studio.js` now reveals the hidden `Other` boxes and restates the four choices live — it
+  may not re-derive the face direction, so the saved clause is carried in `data-face`.

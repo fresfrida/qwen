@@ -14,7 +14,7 @@ Two decisions I was never given, so I built the case that satisfies both and lef
 | The page, locally, not saving anything | `cd app && npm ci && npm start` → http://localhost:3000 |
 | The page actually saving enquiries + uploads | `cd app && MODE=live PORT=4000 OWNER_USER=you OWNER_PASS='at-least-12-chars' npm start` → http://localhost:4000, owner view at `/owner` |
 | See or send a prompt to a model | `cd app && npm run model:info` then `npm run model:preview -- research --brief=examples/brief.json`. Off by default, unreachable from the site; `prompt-sample.txt` is real output |
-| Proof it does what this file claims | `cd app && npm run verify` (49 named tests, `npm audit`, 36 e2e claims against a running server, export self-checks) |
+| Proof it does what this file claims | `cd app && npm run verify` (97 named tests, `npm audit`, 46 e2e claims against a running server, export self-checks) |
 | Browser-level proof | `python3 check_runtime.py` (34 checks: real form submit, real upload, lying SVG refused, owner login, traversal attempts, forced disk failure) |
 | Artifact + reachability checks | `bash verify.sh` (90 checks) |
 | Run it as a container | `cd app && docker build -t myaistudio .` then the `docker run` line in `app/README.md`. Four things still belong to you: TLS in front, a persistent `DATA_DIR`, one process per in-memory limiter, an image scan for known vulnerabilities |
