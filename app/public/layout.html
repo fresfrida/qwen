@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MyAIStudio — original short films</title>
+<meta name="description" content="MyAIStudio is a studio for original short films for TikTok, YouTube Shorts, and Instagram Reels.">
+<meta name="robots" content="noindex">
+<!-- Self-contained by design: no webfonts, no CDN, no analytics, no image files.
+     The only "http" text in this document is an XML namespace name, which browsers never fetch. -->
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="mark"><i></i>MyAIStudio <span>{{MODE_BADGE}}</span></div>
+  <nav class="nav-links" aria-label="Main">
+    <a class="nav-start" href="/studio">Start a film</a>
+    <a class="jump" href="/studio">Films</a>
+    <a class="jump" href="#how-it-works">How it works</a>
+  </nav>
+</header>
+
+<main>
+<section class="hero" id="top">
+  <div class="wrap">
+    <div class="eyebrow">{{MODE_EYEBROW}}</div>
+    <h1>MyAIStudio</h1>
+    <p class="lede">MyAIStudio is a studio for original short films for TikTok, YouTube Shorts, and Instagram Reels. We work to a proposed workflow: AI agents research each topic and draft the scripts, and every story is directed and approved by a human before production.</p>
+    <div class="cta-row">
+      <a class="btn" href="/studio" data-cta="start-a-film">
+        Start a film
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+      <a class="link-secondary" href="#how-it-works">See how it works</a>
+    </div>
+    <p class="cta-note">{{CTA_NOTE}}</p>
+    <div class="facts">
+      <span>TikTok · YouTube Shorts · Instagram Reels</span>
+      <span>Human-directed</span>
+      <span>Proposed workflow</span>
+      {{MODE_FACT}}
+    </div>
+  </div>
+</section>
+
+<section id="how-it-works">
+  <div class="wrap">
+    <div class="eyebrow">How we plan to work</div>
+    <h2 class="h-sec">Our proposed workflow</h2>
+    <p class="sub">Stated as a proposal, in the same order the pipeline view runs. Four short steps here; the full role list and live statuses are in the pipeline view.</p>
+    <!--@WORKFLOW_STEPS@-->
+    <p class="human-tag">No step in this plan hands final judgement to a model. A person directs and approves every story, at two approval gates.</p>
+    <p class="workflow-cta"><a class="btn ghostbtn" href="/studio">Start a film</a></p>
+  </div>
+</section>
+
+<section id="stories">
+  <div class="wrap">
+    <h2 class="h-sec">Stories</h2>
+    <p class="empty-state" data-empty-stories>No published films yet. Films appear here only after you approve one for release.</p>
+  </div>
+</section>
+
+<section id="brand-enquiries">
+  <div class="wrap">
+    <div class="eyebrow">Brand enquiries</div>
+    <!--@FORM_SECTION@-->
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span><strong>MyAIStudio</strong> · {{MODE_BADGE}}</span>
+    <span>{{FOOTER_STATUS}}</span>
+    <a class="jump" href="#top">Back to top</a>
+  </div>
+</footer>
+
+</body>
+</html>

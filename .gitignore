@@ -1,0 +1,22 @@
+# secrets and machine-local state: none of these belong in a repository
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# installed dependencies (recreate with `npm ci`, which is what the lockfile is for)
+node_modules/
+
+# runtime storage: real briefs, submissions and uploaded files are private owner data
+data/
+preview-data/
+*.sqlite
+*.sqlite3
+
+# generated output: `npm run build` recreates the static export
+site/
+
+# evidence images and rollback archives are working files, not history
+*.png
+*.zip

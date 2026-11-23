@@ -1,0 +1,27 @@
+{
+  "name": "myaistudio-site",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MyAIStudio landing page + brand placement enquiries. Prototype mode saves nothing.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test \"test/*.test.js\"",
+    "e2e": "node test/e2e-proof.mjs",
+    "build": "node build/render-static.js",
+    "audit": "npm audit --omit=dev",
+    "verify": "npm test && npm run audit && npm run e2e && npm run build",
+    "model:info": "node src/cli.js model-info",
+    "model:stages": "node src/cli.js model-stages",
+    "model:preview": "node src/cli.js model-preview",
+    "model:run": "node src/cli.js model-run",
+    "asset:preview": "node src/cli.js asset-preview"
+  },
+  "dependencies": {
+    "busboy": "1.6.0"
+  }
+}

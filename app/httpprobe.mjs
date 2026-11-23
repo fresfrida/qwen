@@ -1,0 +1,15 @@
+import { start } from './src/server.js';
+const app = await start({ env: { MODE: 'prototype', PORT: '0', STUDIO_DATA_DIR: '/tmp/qwenwork/httpz' } });
+const B = `http://127.0.0.1:${app.port}`;
+const post = (p, body) => fetch(B + p, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body, redirect: 'manual' });
+const r1 = await fetch(B + '/');
+console.log('public page bytes', (await r1.text()).length);
+const c = await post('/studio/films', 'mode=bring_me_ideas&_token=hp-token-1');
+console.log('create', c.status, c.headers.get('location'));
+const id = new URL(c.headers.get('location'), B).pathname.split('/').pop();
+const run = await post(`/studio/film/${id}/run`, 'version=2');
+console.log('run', run.status, run.headers.get('location'));
+const st = await (await fetch(B + `/studio/film/${id}/status`)).json();
+console.log('status', JSON.stringify(st).slice(0, 80));
+console.log('detail', (await (await fetch(B + '/studio/film/' + id)).text()).length);
+await app.close();

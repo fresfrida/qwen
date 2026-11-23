@@ -1,0 +1,10 @@
+{
+  "company": "Acme Drinks",
+  "offering": "A canned citrus drink, refillable glass format.",
+  "placementLabel": "A YouTube Shorts film",
+  "notes": "They asked for something calm, kitchen in the morning.",
+  "targetLength": "about 30 seconds",
+  "targetSeconds": 30,
+  "sourceLinks": ["https://example.com/brand"],
+  "someUnknownKey": "never read by the pipeline"
+}

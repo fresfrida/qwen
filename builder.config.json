@@ -1,0 +1,153 @@
+{
+  "_note": "PRIVATE builder configuration. Not served, not imported by the browser, and not required to run the app (the app reads only environment variables). Lives outside site/, the published root.",
+  "studio_name": "MyAIStudio",
+  "mode": "prototype",
+  "form_purpose": "brand_enquiries",
+  "form_purpose_decided_by": "assistant, stated out loud on 2026-11-22 after the owner's picker dialog closed twice without an answer. Reason: 'product placements is key' plus 'a place to upload assets' can only be satisfied by the brand enquiry form. To change it, edit FORM_PURPOSE here and in the environment, then read the failure: the app refuses any purpose it has not implemented instead of substituting one.",
+  "form_options_count": "the placement question offers exactly 3 options (TikTok short, YouTube Shorts film, Instagram Reel), taken from the three platforms named in the approved copy; the visitor picks 1 of 3. The count is asserted by test/unit.test.js.",
+  "public_root": "site/",
+  "owner_only_files": [
+    "builder.config.json",
+    "verify.sh",
+    "check_runtime.py",
+    "shot-*.png",
+    "README.md",
+    "app/ (server source)",
+    "node_modules/",
+    "package-lock.json (committed, not served)"
+  ],
+  "app_root": "app/",
+  "commands": {
+    "install": "cd app && npm ci",
+    "test": "cd app && npm test",
+    "behaviour_proof": "cd app && node test/e2e-proof.mjs",
+    "run_prototype": "cd app && npm start",
+    "run_live": "cd app && MODE=live DATA_DIR=/var/lib/myaistudio OWNER_USER=... OWNER_PASS=... npm start",
+    "export_static_preview": "cd app && npm run build",
+    "audit": "cd app && npm run audit",
+    "checks": "bash output/verify.sh",
+    "deploy": "docker build -t myaistudio ./app && docker run -p 8080:3000 -e MODE=live -e OWNER_USER=... -e OWNER_PASS=... -v myaistudio-data:/data myaistudio"
+  },
+  "storage": {
+    "enabled": false,
+    "mode_dependency": "in prototype mode the live adapters are never constructed, so no code path from a request to a disk write exists",
+    "provider": "none while prototype",
+    "port_after_live": "app/src/container.js, one import and one ternary",
+    "adapters_available": {
+      "submissions": [
+        "prototype (refuses)",
+        "file (atomic write + read-back verify, one JSON per enquiry, 0600)"
+      ],
+      "assets": [
+        "prototype (refuses)",
+        "file (magic-byte type check, opaque random key, 0600, owner-route-only read)"
+      ]
+    },
+    "swap_notes": [
+      "Postgres/S3/Supabase: implement the same port in app/src/adapters/, pick it in container.js. routes.js, intake.js and page.js do not change.",
+      "Port contract lives in app/src/ports.js and is asserted by test/intake.test.js with stubs that throw if called.",
+      "Before a live switch: put TLS in front (basic auth sends a password), replace the in-memory rate limit if running more than one process, and give DATA_DIR a persistent volume or move to object storage."
+    ]
+  },
+  "guardrails_after_this_round": {
+    "1_who_can_trigger": "Nothing a visitor submits can trigger a model call: no route imports the pipeline (asserted by verify.sh), and the CLI is a terminal action by you. Owner view is HTTP basic over server-held credentials, refused at boot if absent; no token or key appears in shipped HTML. A script can post the public form - that is the form's purpose - so the caps are server-side: byte limits, type checks from bytes, and an in-process rate limit.",
+    "2_real_boundary": "Enforced in code, not copy: prototype constructs no live adapter at all; uploads are re-identified from bytes at write time; owner reads validate the key shape before touching the filesystem; the static export is verified by build/render-static.js, which fails the build if any live control, submission target, or broken file reference survives. Two findings fixed here: the exported page referenced /app.css that was never beside it (the preview rendered unstyled, contrast measured 1.07:1 and the layout ran 2034px wide), and escapeHtml mapped '/' through a table with no entry for it, producing accept=\"imageundefinedpng\" - a silently broken file filter that the old text-based checks could not see.",
+    "3_escaping_at_every_exit": "One escapeHtml used by the renderer and the owner table; stored text is raw and escaped at render. Unknown fields are dropped before storage. Newlines are stripped from single-line values so stored text cannot forge a line in a log or a CSV later.",
+    "4_wrong_facts": "The thank-you string is emitted only after save() confirms with a read-back; a failed or refused write answers 'Nothing was saved.' The public copy stays verbatim; the page states no reach, no replies, no track record.",
+    "5_wrong_target": "An unimplemented FORM_PURPOSE raises instead of choosing a near match; a placement value that is not one of the three is rejected with a message; asset keys must match the exact shape this store issued or the read is refused.",
+    "6_unexpected_input": "Asserted against the running app: 2000-character and 500k-character fields, control and bidi-override characters, '<img src=x onerror>' values, a 3MB upload, an SVG named .png, a MIME declaration that disagrees with the bytes, '../..' style filenames, malformed multipart bodies, unknown file field names, more files than allowed, a wrong _form token, an unsupported content type, and a 900-character card title at 320px. All green in the suites. Model-seam additions: a brief containing a forged fence boundary mid-sentence or nested, 600 forged boundaries in one field (settles in ~1ms, ~2ms escaped), an answer with claims but no sources, an invented source URL, an over-long quote, 7 scenes when the prompt allows 6, a 'BLOCKED:' refusal returned as a refusal, non-JSON prose, malformed optional arrays, a call pushed past the per-brief budget, and a provider given an empty model name or base URL.",
+    "7_load_failure_time": "Atomic tmp+fsync+rename per record and per asset; read-back before anything is called saved; on a failed record write the already-uploaded asset is deleted; bounded header/request timeouts; per-IP limiter; graceful shutdown. Proof observes subs=1 assets=1 both before and after a forced EACCES failure, with the page answering 'Nothing was saved.' and no thank-you.",
+    "8_data_paths": "Visitor text and files reach only your own storage; in prototype nothing at all. The single network path in the codebase is the model provider, which no route can reach and which needs MODEL_ENABLED + a named provider + MODEL_SEND_BRIEF_DATA + MODEL_DRY_RUN=false, checked in that order. Uploaded assets need a second, separate approval. In dry-run and refusal cases the prompt is assembled locally and thrown away, and the refusal states the byte count it did not send. Browser history keeps the preview URL; nothing writes cookies or localStorage.",
+    "9_claims_match_code": "49 named node assertions, 36 end-to-end claims, 90 artifact checks and 34 browser checks all pass at build time; each count is recomputed by the command that prints it, and the README tables were regenerated from those measurements rather than typed. The claim that went stale mid-build was the README's 'no outbound requests at all', which became false when the model provider was added and was rewritten to name the single file that can make a request. Prompt limits are read from the prompt files at call time, so editing a prompt cannot leave the code enforcing an older number.",
+    "10_removed_things_returning": "No mailto fallback, no 'temporary' default purpose, no hidden second form, no disabled-but-live control in the export, no admin token in the page.",
+    "11_setup_friction": "To view: open the preview or run npm start; nothing to configure. Flipping to live needs env vars (MODE, DATA_DIR, OWNER_USER, OWNER_PASS), which is unavoidable for a store with credentials inside. For a cloud deploy that means a secrets screen, not a code edit.",
+    "12_publish_state": "The site/ root holds one HTML file. No git here, so no published history: confirm with git log -p plus a secret scan once this becomes a repo. The site requests no third-party resources and sets no cookies.",
+    "13_known_vulnerabilities": "npm audit --omit=dev: found 0 vulnerabilities. Runtime dependencies are exactly busboy@1.6.0 plus streamsearch@1.1.0 (busboy 1.6.0 is the release fixing the 1.5.x DoS advisories); 0 devDependencies; package-lock.json committed so npm ci installs what was tested. Dockerfile: node:22-alpine matching the tested major, npm ci --ignore-scripts, runs as USER node. The image itself was not scanned here - no container runtime in the sandbox - so run 'docker scan'/'trivy image' on the built image before deploying, and pin by digest.",
+    "11_easy_to_try_VISUAL_CONTROL": "Visual review control: a caption model reported clipped inputs and uneven radio spacing from a 11900px full-page strip. Measured at 390px and 1280px: no element crosses the right edge (the textarea spans 20-370 inside a 20-370 container) and the three placement options have uniform 17px gaps, so nothing was changed on an unverifiable claim. Tall full-page renders are not a reliable input for visual judgement; use shot-form-phone.png / shot-page-desktop.png."
+  },
+  "approval_required_before": [
+    "publishing",
+    "connecting any account",
+    "spending credits",
+    "any outbound email/CRM/messaging",
+    "switching MODE to live",
+    "adding a third-party request to the page"
+  ],
+  "forbidden_on_page": [
+    "reply or follow-up promises",
+    "audience numbers",
+    "view counts",
+    "testimonials",
+    "partner logos",
+    "statistics",
+    "revenue claims",
+    "invented film titles",
+    "implying agents are an operating team",
+    "claiming research or a script has been produced"
+  ],
+  "before_public_gates": [
+    "TLS in front: owner auth is HTTP basic, which is credential-in-clear without it",
+    "DATA_DIR on a persistent volume, or move to the object-storage/Postgres adapter",
+    "one process per limiter, or lift the limiter out of memory before scaling",
+    "secrets in the platform store, never in the image or in site/",
+    "container image scanned for known vulnerabilities (not possible in this sandbox)"
+  ],
+  "site_contents": [
+    "app.css",
+    "favicon.svg",
+    "grain.svg",
+    "index.html"
+  ],
+  "evidence_files": [
+    "builder.config.json",
+    "check_runtime.py",
+    "shot-app-form.png",
+    "shot-app-owner.png",
+    "shot-app-prototype-answer.png",
+    "shot-app-storage-failure.png",
+    "shot-form-phone.png",
+    "shot-page-desktop.png",
+    "shot-static-preview.png",
+    "verify.sh"
+  ],
+  "model": {
+    "enabled": false,
+    "provider": "",
+    "provider_options_present": [
+      "none",
+      "echo",
+      "openai",
+      "openai-compatible",
+      "ollama"
+    ],
+    "model_id": "",
+    "base_url": "",
+    "api_key": "not set here; read from MODEL_API_KEY in the environment at runtime",
+    "dryRun": true,
+    "maxCallsPerBrief": 3,
+    "approvals": {
+      "sendBriefData": false,
+      "readUploadedAssets": false
+    },
+    "prompts_dir": "app/prompts",
+    "why": "The page and the enquiry form never call a model. The pipeline exists as a seam the owner drives from a terminal, so a model can be introduced deliberately rather than by accident.",
+    "swapping": "Provider, endpoint and model name are three environment variables. Prompt text is two files. Neither needs a code change or a rebuild.",
+    "limits_live_in_the_prompts": "Each *.prompt.md declares limits in its front matter; the same numbers are quoted to the model AND read back by validateResearch/validateScript at call time. Changing maxClaims in the file changes both.",
+    "containment": "Visitor text is never interpolated into the instruction text. It enters fenced data blocks whose boundary token is checked against the content, and the chat provider receives instructions and data as separate turns.",
+    "pending_owner_decision": "Whether uploaded assets may be read by an OCR model. That reads a stored brand file plus enquiry text out of the machine; nothing is approved until MODEL/OCR approvals are set and MODE=live.",
+    "status": "implemented, switched off; reachable only through src/cli.js"
+  },
+  "counts_measured_at_build_time": {
+    "node_assertions": 49,
+    "e2e_claims": 36,
+    "verify_checks": 90,
+    "browser_checks": 34,
+    "how_to_remeasure": "cd app && npm run verify ; bash ../verify.sh ; python3 ../check_runtime.py"
+  },
+  "todo_owner_decisions": [
+    "confirm brand_enquiries is the form you meant (switching is a config edit plus one definition module)",
+    "whether enquiry text may ever leave the machine toward a model endpoint (MODEL_SEND_BRIEF_DATA)",
+    "whether uploaded brand assets may be sent to an OCR model to read their content (OCR_IMAGE_APPROVED) - pending, and it costs credits",
+    "where this will be hosted, which decides whether the file storage adapter is right or an object-storage/Postgres adapter is needed"
+  ]
+}
